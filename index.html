@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>Checkers for you!</title>
+		<style>
+			* {
+				padding: 0;
+				margin: 0;
+			}
+			body {
+
+				margin: 10px;
+				margin-top: 50px;
+				background: #eee;
+				background: linear-gradient(to bottom, #D7D7D7 10%, #eee);
+				height: 100vh;
+				overflow:hidden;
+			}
+			#container {
+				display: grid;
+				grid-template-columns: 1fr 2fr 1fr;
+				grid-template-areas: "left canvas right";
+				margin: 10px;
+			}
+			.main-menu-container {
+				grid-area: left;
+			}
+			.main-menu-list {
+				list-style: none;
+			}
+			.main-menu-list li {
+				background-color: #F4F4F4;
+				background: linear-gradient(to bottom, #F5F5F5, #F3F3F3);
+				border: 1px solid #E2E2E2;
+				color: #848484;
+				display: block;
+
+				font-family: sans-serif;
+				font-size: 20px;
+				font-weight: bold;
+
+				height: 40px;
+				line-height: 40px;
+				margin: 10px;
+				padding: 5px;
+				text-align: center;
+				width: 250px;
+
+			}
+			.main-menu-list li:hover {
+				cursor:pointer;
+				//background: #F7F7F7;
+				background: #3893E8;
+				color: #fff;
+
+
+			}
+			.current-games-container {
+				grid-area: right;
+			}
+			.current-games-list {
+				list-style:none;
+			}
+			.current-games-list li {
+				padding: 5px;
+				padding-left: 15px;
+				margin: 5px;
+
+				background-color: #333;
+				color: #848484;
+				font-family: sans-serif;
+				font-size: 16px;
+				font-weight: bold;
+			}
+			.current-games-list li:hover {
+				cursor:pointer;
+				background-color: #AAA;
+				color: #333;
+			}
+			.canvas-container {
+				grid-area: canvas;
+				height: 90vh;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id='container'>
+			<div class="main-menu-container">
+				<ul class='main-menu-list'>
+					<li id='createGameButton'>Create game</li>
+					<li id='vsAIButton'>Play vs AI</li>
+					<li id='PvPButton'>PvP play</li>
+				</ul>
+			</div>
+			<div class="canvas-container">
+				<canvas id="canvas"></canvas>		
+			</div>
+			<div class="current-games-container">
+				<ul class="current-games-list">
+					<li>game1</li>
+					<li>game2</li>
+					<li>game3</li>
+					<li>game4</li>
+					<li>game5</li>
+				</ul>
+			</div>
+		</div>
+		
+		<script src="view.js"></script>
+		<script src="main.js"></script>
+		
+	</body>
+</html>
