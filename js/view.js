@@ -34,6 +34,7 @@ class View {
 		this.dragAndDrop = new DragAndDrop(canvas);
 		this.dragAndDrop.start();
 		this.isWhiteMove = true;
+		this.availableMoves = [];
 	}
 	get width() {
 		return this.canvas.width;
@@ -47,36 +48,53 @@ class View {
 	draw() {
 		setTimeout(()=> {
 			this.drawBoard();
-			this.drawCells();
+			this.drawDraughts();
 		},0);
 	}
-
+	showBoard() {
+		let tempView = new View(canvas);
+		tempView.setPosition(board);
+		tempView.draw();
+	}
 	// cells = [{i,j,c}, {i,j}, ...]
-	_update(board, currentPlayerColor, callback) {
-		this.isWhiteMove = currentPlayerColor > 0;
+	setPosition(board) {
 		this.draughts = board.getDraughts().map(({i,j,value}, id)=>{
 			let [newI, newJ] = this.rotate(i,j)
 			return new Draught(this, newI,newJ,value, id);
 		});
+	}
+	_update(board, currentPlayerColor, callback) {
+		this.isWhiteMove = currentPlayerColor > 0;
+		this.setPosition(board);
 		this.dragAndDrop.clear();
 		this.dragAndDrop.add(...this.draughts.filter(e=>e.color * currentPlayerColor > 0));
 		this.changeHandler();
 		this.board = board;
 		this.returnMove = callback;
+		this.availableMoves = board.getPossibleMoves(currentPlayerColor);
+		this.resetCurrentAvailable();
 	}
-	getMove(cells, currentPlayerColor) {
+	resetCurrentAvailable() {
+		this.currentAvailable = [].concat(this.availableMoves);
+		this.currentPath = [];
+	}
+	clearCurrentMoves() {
+		setPosition(this.board);
+		this.resetCurrentAvailable();	
+	}
+	getMove(board, currentPlayerColor) {
 		return new Promise((res,rej)=>{
-			this._update(cells, currentPlayerColor, function(move){
+			this._update(board, currentPlayerColor, function(move){
 				res(move);
 			});
 		});
 	}
 
-	drawCells() {
-		let cells = this.draughts;
+	drawDraughts() {
+		let draughts = this.draughts;
 		let ctx = this.ctx;
-		for (let i = 0; i < cells.length; i++) {
-			cells[i].draw(ctx);
+		for (let i = 0; i < draughts.length; i++) {
+			draughts[i].draw(ctx);
 		}
 	}
 
@@ -107,6 +125,10 @@ class View {
 		}
 		return [7-i, 7-j];
 	}
+	endMove() {
+		this.returnMove(Move.concat(...this.currentPath));
+		this.block();
+	}
 	tryMove(startI, startJ, endI, endJ) {
 		if (!Board.isRightIndexes(endI, endJ))
 			return false;
@@ -117,12 +139,18 @@ class View {
 
 		let [i0, j0] = this.rotate(startI, startJ);
 		let [i1, j1] = this.rotate(endI, endJ);
-		if (!this.board.isEmpty(i1, j1)) {
+		let move = new Move(i0, j0, i1, j1);
+		let nextMoves = this.currentAvailable.filter(m => m.head().equals(move));
+		if (nextMoves.length == 0)
 			return false;
+		this.currentPath.push(move);
+		if (nextMoves.length == 1 && nextMoves[0].next.length == 1) {
+			this.endMove();
+			return true;
 		}
+		this.currentAvailable = nextMoves.map(e=>e.tail());
+
 		
-		this.returnMove(new Move(i0, j0, i1, j1));
-		this.block();
 		return true;
 	}
 }

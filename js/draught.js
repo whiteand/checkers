@@ -50,7 +50,6 @@ class Draught {
 		const size = this.view.cellSize;
 		let newI = Math.floor(mouseY / size);
 		let newJ = Math.floor(mouseX / size);
-		console.log(this.i, this.j,"->", newI, newJ);
 		let ok = this.view.tryMove(this.i, this.j, newI, newJ);
 		if (ok) {
 			this.setCell(newI,newJ);

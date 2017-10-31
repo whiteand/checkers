@@ -90,7 +90,6 @@ class DragAndDrop
             }
             if (minIndex < 0)
                 return;
-            console.log("DRAG");
             this.dragedObject = this.objects[minIndex];
             this.dragedObject.dragStart(mouseX, mouseY);
     	};
