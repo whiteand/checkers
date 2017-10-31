@@ -1,85 +1,3 @@
-
-class Cell {
-	constructor(view,i,j, color) {
-		this.view = view;
-		this.color = color;
-		this.setCell(i,j);
-	}
-	draw(ctx) {
-		ctx.pushFillStroke();
-		
-		ctx.beginPath();
-
-		ctx.arc(this.x, this.y, this.view.cellSize * Cell.RADIUS, 0, Math.PI * 2);
-		ctx.fillStyle = (this.color == COLOR.WHITE) ? Cell.WHITE_CELL_COLOR : Cell.BLACK_CELL_COLOR;
-		ctx.fill();
-		ctx.stroke();
-
-		ctx.beginPath();
-		ctx.arc(this.x, this.y, this.view.cellSize * Cell.SMALL_RADIUS, 0, Math.PI * 2);
-		ctx.strokeStyle = Cell.LINE_COLOR;
-		ctx.lineWidth = 5;
-		ctx.stroke();
-		ctx.closePath();
-		ctx.beginPath();
-		ctx.arc(this.x, this.y, this.view.cellSize * Cell.SMALLEST_RADIUS, 0, Math.PI * 2);
-		ctx.strokeStyle = Cell.LINE_COLOR;
-		ctx.lineWidth = 3;
-		ctx.fillStyle = Cell.LINE_COLOR;
-		ctx.closePath();
-		ctx.fill();
-		ctx.popFillStroke();
-	}
-	// drag(mouseX, mouseY) // : void
-	drag(mouseX, mouseY) {
-		this.setCoord(mouseX, mouseY);
-	}
-	// dragStart(mouseX, mouseY)// : void
-	dragStart(mouseX, mouseY) {
-		this.setCoord(mouseX,mouseY);
-	}
-	setCoord(x,y) {
-		this.x = x;
-		this.y = y;
-		this.view.changeHandler();
-	}
-	// drop(mouseX, mouseY) //:void
-	 drop(mouseX, mouseY) {
-		const size = this.view.cellSize;
-		let newI = Math.floor(mouseY / size);
-		let newJ = Math.floor(mouseX / size);
-		console.log(this.i, this.j,"->", newI, newJ);
-		let ok = this.view.tryMove(this.i, this.j, newI, newJ);
-		if (ok) {
-			this.setCell(newI,newJ);
-		} else {
-			this.setCell(this.i, this.j);
-		}
-	}
-
-	setCell(i,j) {
-		this.i = i;
-		this.j = j;
-		const size = this.view.cellSize;
-		this.setCoord(size * j + (size >> 1),size * i + (size >> 1));
-
-	}
-	// isDrag(mouseX, mouseY) //:void
-	isDrag(x, y) {
-		const size= this.view.cellSize;
-		return this.getDistance(x,y) < size*2;
-	}
-	// getDistance(mouseX, mouseY) //:number
-	getDistance(X, Y) {
-		return Math.sqrt(Math.pow(X-this.x,2) + Math.pow(Y - this.y,2));
-	}
-}
-Cell.WHITE_CELL_COLOR = "#fff";
-Cell.BLACK_CELL_COLOR = "#000";
-Cell.LINE_COLOR = "#666";
-Cell.RADIUS = 0.4;
-Cell.SMALL_RADIUS = Cell.RADIUS * 0.75;
-Cell.SMALLEST_RADIUS = Cell.SMALL_RADIUS * 0.8;
 class CtxState {
 	constructor(fill, stroke, lineWidth) {
 		this.fillStyle = fill;
@@ -87,6 +5,7 @@ class CtxState {
 		this.lineWidth = lineWidth;
 	}
 }
+
 class View {
 	constructor(canvas, onchange) {
 		this.canvas = canvas;
@@ -106,10 +25,15 @@ class View {
 			this.strokeStyle = state.strokeStyle;
 			this.lineWidth = state.lineWidth;
 		}
-		this.cells = [];
-		this.changeHandler = onchange;
+		this.draughts = [];
+		this.changeHandler = ()=>{
+			this.draw();
+			if (typeof onchange === 'function')
+			onchange();
+		};
 		this.dragAndDrop = new DragAndDrop(canvas);
 		this.dragAndDrop.start();
+		this.isWhiteMove = true;
 	}
 	get width() {
 		return this.canvas.width;
@@ -121,25 +45,39 @@ class View {
 		return Math.min(this.width, this.height) / 8;
 	}
 	draw() {
-		this.drawBoard();
-		this.drawCells();
+		setTimeout(()=> {
+			this.drawBoard();
+			this.drawCells();
+		},0);
 	}
 
 	// cells = [{i,j,c}, {i,j}, ...]
-	update(cells) {
-		const size = this.cellSize;
-		this.cells = cells.map(({i,j,c})=>{
-			return new Cell(this, i,j,c);
+	_update(board, currentPlayerColor, callback) {
+		this.isWhiteMove = currentPlayerColor > 0;
+		this.draughts = board.getDraughts().map(({i,j,value}, id)=>{
+			let [newI, newJ] = this.rotate(i,j)
+			return new Draught(this, newI,newJ,value, id);
 		});
 		this.dragAndDrop.clear();
-		this.dragAndDrop.add(...this.cells);
+		this.dragAndDrop.add(...this.draughts.filter(e=>e.color * currentPlayerColor > 0));
 		this.changeHandler();
+		this.board = board;
+		this.returnMove = callback;
+	}
+	getMove(cells, currentPlayerColor) {
+		return new Promise((res,rej)=>{
+			this._update(cells, currentPlayerColor, function(move){
+				res(move);
+			});
+		});
 	}
 
 	drawCells() {
-		this.cells.forEach(cell=>{
-			cell.draw(this.ctx);
-		})
+		let cells = this.draughts;
+		let ctx = this.ctx;
+		for (let i = 0; i < cells.length; i++) {
+			cells[i].draw(ctx);
+		}
 	}
 
 
@@ -150,7 +88,7 @@ class View {
 		let size = this.cellSize;
 		for (let i = 0; i < 8; i++) {
 			for (let j = 0; j < 8; j++) {
-				if ((i + j) % 2 == 0) {
+				if (Board.isCellBlack(i,j)) {
 					this.ctx.fillStyle = View.BLACK_CELL_COLOR;		
 					let top = i*size;
 					let left = j*size;
@@ -160,8 +98,32 @@ class View {
 		}
 		this.ctx.popFillStroke();
 	}
+	block() {
+		this.dragAndDrop.clear();
+	}
+	rotate(i,j) {
+		if (this.isWhiteMove) {
+			return [i,j];
+		}
+		return [7-i, 7-j];
+	}
 	tryMove(startI, startJ, endI, endJ) {
-		return (endI + endJ) % 2 == 0;
+		if (!Board.isRightIndexes(endI, endJ))
+			return false;
+		if (!Board.isCellBlack(endI, endJ))
+			return false;
+		if (startI == endI && startJ == endJ) 
+			return false;
+
+		let [i0, j0] = this.rotate(startI, startJ);
+		let [i1, j1] = this.rotate(endI, endJ);
+		if (!this.board.isEmpty(i1, j1)) {
+			return false;
+		}
+		
+		this.returnMove(new Move(i0, j0, i1, j1));
+		this.block();
+		return true;
 	}
 }
 

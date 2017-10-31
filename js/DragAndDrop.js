@@ -100,9 +100,11 @@ class DragAndDrop
     	return (event)=>{
             if (this.dragedObject == null)
                 return;
+
             let [mouseX, mouseY] = this.getMousePosition(event);
             [mouseX, mouseY] = this.toCanvasScale(mouseX, mouseY);
-            this.dragedObject.drop(mouseX, mouseY);
+            let draged = this.dragedObject;
+            draged.drop(mouseX, mouseY);
             this.dragedObject = null;
     	}
     }
