@@ -96,8 +96,16 @@ class View {
 	drawDraughts() {
 		let draughts = this.draughts;
 		let ctx = this.ctx;
+		let lastDraught = null;;
 		for (let i = 0; i < draughts.length; i++) {
+			if (draughts[i] == this.dragAndDrop.dragedObject) {
+				lastDraught = draughts[i];	
+				continue;
+			}
 			draughts[i].draw(ctx);
+		}
+		if (lastDraught) {
+			lastDraught.draw(ctx);
 		}
 	}
 

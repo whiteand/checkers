@@ -29,7 +29,6 @@ class Board extends Array {
 	}
 	
 	makeMove(move) {
-		console.log(`Make Move: `,move.toString())
 		if (!move || move.next.length == 0) {
 			return;
 		}
