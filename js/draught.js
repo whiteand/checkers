@@ -15,7 +15,13 @@ class Draught {
 			case COLOR.BLACK_QUEEN:
 				return "Black queen";
 		}
-		alert("ERROR");
+		alert(`DRAUGHT WRONG VALUE: ${this.value}`);
+	}
+	getColor() {
+		return COLOR.isWhite(this.value) ? COLOR.WHITE : COLOR.BLACK;
+	}
+	isQueen() {
+		return Math.abs(this.value) > 1;
 	}
 	toString() {
 		return `(${this.i}, ${this.j}, ${this.getStringValue()})`;

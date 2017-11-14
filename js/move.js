@@ -12,10 +12,7 @@ class Move {
 		}
 	}
 	get startPosition() {
-		if (this._startPosition) {
-			return this._startPosition;
-		}
-		return this._startPosition = new Position(this.i0, this.j0);
+		return new Position(this.i0, this.j0);
 	}
 	toString() {
 		let startPos = `${this.i0},${this.j0}`;
