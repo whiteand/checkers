@@ -12,38 +12,46 @@ PvPButton.addEventListener("click",onPvPButton);
 let view = new View(canvas);
 let ai = new AI();
 let board;
-function wait(ms, value) {
+const DELAY = 0;
+function waitFor(ms, value) {
 	return new Promise((res) => {
-		setTimeout(()=>{
-			res(value);
-		}, ms);
+		setTimeout(res, 10);
 	})
 }
 async function startGame(whitePlayer, blackPlayer) {
 	let currentPlayer = COLOR.WHITE;
 	let isPlaying = true;
-
+	let winner = null;
 	//let board = makeStartBoard();
 	board = new Board();
-	while (isPlaying) {
+	while (true) {
+
 		let whiteMove = await whitePlayer.getMove(board, COLOR.WHITE);
 		
-		
-
-		console.log(`WhiteMove: `, whiteMove);
 		board.makeMove(whiteMove);
-		view.showBoard(board);
-		await wait(500);
+		await view.showBoard(board);
+		winner = board.getWinner(COLOR.BLACK);
+		if (winner != null) {
+			break;
+		}
+		await waitFor(DELAY);
 		let blackMove = await blackPlayer.getMove(board, COLOR.BLACK);
 		
-		await wait(500);
+		
 		board.makeMove(blackMove);
-		view.showBoard(board);
+		await view.showBoard(board);
+		winner = board.getWinner(COLOR.WHITE);
+		if (winner != null) {
+			break;
+		}
+		await waitFor(DELAY);
 	}
+	alert(winner);
 }
 
 
-startGame(view, view);
+//startGame(view, view);
+startGame(ai, ai);
 
 function onVSAIButton(e) {
 	alert("VS AI BUTTON PRESSED");

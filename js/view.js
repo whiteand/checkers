@@ -46,21 +46,24 @@ class View {
 		return Math.min(this.width, this.height) / 8;
 	}
 	draw() {
-		setTimeout(()=> {
-			this.drawBoard();
-			this.drawDraughts();
-		},0);
+		return new Promise((res,rej)=>{
+			setTimeout(()=> {
+				this.drawBoard();
+				this.drawDraughts();
+				res();
+			},0);	
+		})
 	}
 	showBoard() {
 		let tempView = new View(canvas);
 		tempView.setPosition(board);
-		tempView.draw();
+		return tempView.draw();
 	}
 	// cells = [{i,j,c}, {i,j}, ...]
 	setPosition(board) {
 		this.draughts = board.getDraughts().map(({i,j,value}, id)=>{
 			let [newI, newJ] = this.rotate(i,j)
-			return new Draught(this, newI,newJ,value, id);
+			return new DraughtView(this, newI,newJ,value, id);
 		});
 	}
 	_update(board, currentPlayerColor, callback) {
